@@ -50,7 +50,27 @@ jobs:
       - name: Execute sync
         run: cd cache && ../mastodon-twitter-sync --config=../config/mastodon-twitter-sync.toml
 
-      - name: Delete old Github Actions cache entries
-        run: cd config && ./cache-cleanup.sh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete of Github Actions cache entries
+        uses: actions/github-script@v6
+        with:
+          script: |
+            console.log("About to clear caches")
+            const caches = await github.rest.actions.getActionsCacheList({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            for (const cache of caches.data.actions_caches) {
+              console.log(cache)
+              github.rest.actions.deleteActionsCacheById({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                cache_id: cache.id,
+              })
+            }
+            console.log("Clear completed")
+
+
+#       - name: Delete old Github Actions cache entries
+#         run: cd config && ./cache-cleanup.sh
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
